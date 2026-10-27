@@ -23,6 +23,19 @@ class VPPInterface:
         self.vpp_ifname = vpp_ifname
         self.vpp = VPPControl()
 
+    def disable_mpls(self):
+        """Disable MPLS before the interface is deleted
+
+        VPP counts MPLS per interface index and keeps the count when the
+        interface is deleted. A new interface with the same index would then
+        never get the MPLS feature enabled.
+        """
+        if (
+            self.vpp.get_sw_if_index(self.vpp_ifname)
+            in self.vpp.mpls_enabled_interfaces()
+        ):
+            self.vpp.set_interface_mpls(self.vpp_ifname, False)
+
     def set_state(self, state: str):
         """Set interface state to UP or DOWN
         Args:

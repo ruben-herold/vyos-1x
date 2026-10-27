@@ -24,8 +24,10 @@ from vyos.configverify import has_frr_protocol_in_dict
 from vyos.frrender import get_frrender_dict
 from vyos.utils.dict import dict_search
 from vyos.utils.file import read_file
+from vyos.utils.process import is_systemd_service_active
 from vyos.utils.system import sysctl_write
 from vyos.configverify import verify_interface_exists
+from vyos.vpp.control_vpp import VPPControl
 from vyos import ConfigError
 from vyos import airbag
 airbag.enable()
@@ -116,6 +118,20 @@ def apply(config_dict):
             system_interfaces.append(os.path.basename(interface))
         for system_interface in system_interfaces:
             sysctl_write(['net', 'mpls', 'conf', system_interface, 'input'], 0)
+
+    # VPP drops labeled packets on an interface that has MPLS disabled,
+    # whatever the kernel setting is. linux-cp copies the state to the kernel
+    # interface of the pair.
+    if is_systemd_service_active('vpp.service'):
+        vpp = VPPControl()
+        enabled = vpp.mpls_enabled_interfaces()
+        configured = mpls.get('interface', {})
+        for pair in vpp.lcp_pairs_list():
+            if pair['kernel_name'] in configured:
+                if pair['vpp_index_hw'] not in enabled:
+                    vpp.set_interface_mpls(pair['vpp_name_hw'], True)
+            elif pair['vpp_index_hw'] in enabled:
+                vpp.set_interface_mpls(pair['vpp_name_hw'], False)
 
     return None
 

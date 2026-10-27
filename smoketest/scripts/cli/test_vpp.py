@@ -131,6 +131,18 @@ def get_isolated_cpus():
     return range_str_to_list(isolated)
 
 
+def mpls_enabled_list() -> str:
+    _, out = rc_cmd('sudo vppctl show mpls interface')
+    return out
+
+
+def mpls_feature_enabled(vpp_ifname: str) -> bool:
+    """MPLS is on when the mpls-input arc of the interface is not mpls-not-enabled"""
+    _, out = rc_cmd(f'sudo vppctl show interface feat {vpp_ifname}')
+    match = re.search(r'mpls-input:\s*\n\s*(\S+)', out)
+    return bool(match) and match.group(1) != 'mpls-not-enabled'
+
+
 class TestVPP(VyOSUnitTestSHIM.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -159,6 +171,7 @@ class TestVPP(VyOSUnitTestSHIM.TestCase):
             self.assertTrue(process_named_running(PROCESS_NAME))
         finally:
             # Ensure these cleanup operations always run
+            self.cli_delete(['protocols', 'mpls'])
             self.cli_delete(base_path)
             self.cli_delete(interfaces_path)
             self.cli_delete(prometheus_base_path + ['vpp-exporter'])
@@ -2412,6 +2425,45 @@ class TestVPP(VyOSUnitTestSHIM.TestCase):
         file_content = read_file(vpp_exporter_service_file)
         self.assertIn(f'ip vrf exec {vpp_exporter_vrf}', file_content)
         self.assertTrue(process_named_running(VPP_EXPORTER_PROCESS_NAME))
+
+
+    def test_30_mpls_interface(self):
+        # MPLS is enabled on the VPP interface and on the tap of its LCP pair,
+        # labeled packets are dropped otherwise
+        mpls_interface_path = ['protocols', 'mpls', 'interface']
+        self.cli_set(mpls_interface_path + [interface])
+        self.cli_commit()
+
+        out = mpls_enabled_list()
+        self.assertEqual(out.count('MPLS enabled'), 2)
+        self.assertTrue(mpls_feature_enabled(interface))
+
+        # a restart of VPP drops the state, it has to come back
+        self.cli_set(base_path + ['settings', 'poll-sleep-usec', '20'])
+        self.cli_commit()
+        self.assertEqual(mpls_enabled_list().count('MPLS enabled'), 2)
+        self.assertTrue(mpls_feature_enabled(interface))
+
+        self.cli_delete(mpls_interface_path + [interface])
+        self.cli_commit()
+        self.assertEqual(mpls_enabled_list().count('MPLS enabled'), 0)
+        self.assertFalse(mpls_feature_enabled(interface))
+
+    def test_30_1_mpls_interface_rebuild(self):
+        # a commit of a VPP interface deletes and creates it again, MPLS has
+        # to be enabled again afterwards
+        loopback = 'vpplo11'
+        vpp_loopback = vpp_iface_name_transform(loopback)
+        loopback_path = interfaces_path + ['loopback', loopback]
+        self.cli_set(loopback_path + ['address', '192.0.2.11/32'])
+        self.cli_commit()
+        self.cli_set(['protocols', 'mpls', 'interface', loopback])
+        self.cli_commit()
+        self.assertTrue(mpls_feature_enabled(vpp_loopback))
+
+        self.cli_set(loopback_path + ['address', '192.0.2.12/32'])
+        self.cli_commit()
+        self.assertTrue(mpls_feature_enabled(vpp_loopback))
 
 
 if __name__ == '__main__':

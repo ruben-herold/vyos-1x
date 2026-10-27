@@ -129,6 +129,8 @@ class VPPBondInterface(Interface, VPPInterface):
 
     def remove(self):
         if self.index:
+            self.disable_mpls()
+
             # Detach all existing members
             members = self.get_members()
             for member in members:

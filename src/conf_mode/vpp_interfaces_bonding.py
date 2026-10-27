@@ -172,6 +172,10 @@ def get_config(config=None) -> dict:
     if conf.exists(['vpp', 'ipfix']):
         set_dependents('vpp_ipfix', conf)
 
+    # MPLS dependency - the MPLS state is lost when the interface is recreated
+    if conf.exists(['protocols', 'mpls', 'interface', ifname]):
+        set_dependents('mpls', conf)
+
     return config
 
 

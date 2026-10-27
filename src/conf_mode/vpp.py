@@ -618,6 +618,10 @@ def get_config(config=None):
         set_dependents('pppoe_server', conf)
     config['changed_pppoe_ifaces'] = changed_pppoe_ifaces
 
+    # MPLS dependency, a VPP restart drops the MPLS state of the interfaces
+    if conf.exists(['protocols', 'mpls', 'interface']):
+        set_dependents('mpls', conf)
+
     return config
 
 

@@ -125,6 +125,8 @@ class VPPGREInterface(Interface, VPPInterface):
 
     def remove(self):
         if self.index:
+            self.disable_mpls()
+
             # Delete lcp pair interface
             if self.vpp.lcp_pair_find(vpp_name_hw=self.vpp_ifname):
                 self.kernel_delete()

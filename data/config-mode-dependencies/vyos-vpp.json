@@ -14,9 +14,11 @@
         "vpp_nat_cgnat": ["vpp_nat_cgnat"],
         "vpp_sflow": ["vpp_sflow"],
         "pppoe_server": ["service_pppoe-server"],
+        "mpls": ["protocols_mpls"],
         "vpp_per_node_counters": ["service_monitoring_prometheus"]
     },
     "vpp_interfaces_bonding": {
+        "mpls": ["protocols_mpls"],
         "vpp_interfaces_xconnect": ["vpp_interfaces_xconnect"],
         "vpp_interfaces_bridge": ["vpp_interfaces_bridge"],
         "vpp_acl": ["vpp_acl"],
@@ -26,6 +28,7 @@
         "pppoe_server": ["service_pppoe-server"]
     },
     "vpp_interfaces_gre": {
+        "mpls": ["protocols_mpls"],
         "vpp_interfaces_xconnect": ["vpp_interfaces_xconnect"],
         "vpp_interfaces_bridge": ["vpp_interfaces_bridge"],
         "vpp_acl": ["vpp_acl"],
@@ -33,18 +36,21 @@
         "vpp_nat_cgnat": ["vpp_nat_cgnat"]
     },
     "vpp_interfaces_ipip": {
+        "mpls": ["protocols_mpls"],
         "vpp_interfaces_xconnect": ["vpp_interfaces_xconnect"],
         "vpp_acl": ["vpp_acl"],
         "vpp_nat_nat44": ["vpp_nat_nat44"],
         "vpp_nat_cgnat": ["vpp_nat_cgnat"]
     },
     "vpp_interfaces_loopback": {
+        "mpls": ["protocols_mpls"],
         "vpp_interfaces_bridge": ["vpp_interfaces_bridge"],
         "vpp_acl": ["vpp_acl"],
         "vpp_nat_nat44": ["vpp_nat_nat44"],
         "vpp_nat_cgnat": ["vpp_nat_cgnat"]
     },
     "vpp_interfaces_vxlan": {
+        "mpls": ["protocols_mpls"],
         "vpp_interfaces_bridge": ["vpp_interfaces_bridge"],
         "vpp_interfaces_xconnect": ["vpp_interfaces_xconnect"],
         "vpp_acl": ["vpp_acl"],
