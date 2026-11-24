@@ -961,6 +961,24 @@ class BasicInterfaceTest:
                     self.assertEqual(tmp['mtu'], int(mtu_1420))
 
 
+        def test_vif_8021q_qos_invalid(self):
+            if not self._test_vlan:
+                self.skipTest(MSG_TESTCASE_UNSUPPORTED)
+
+            interface = self._interfaces[0]
+            vlan = self._vlan_range[0]
+            base = self._base_path + [interface, 'vif', vlan]
+            for option in ['ingress-qos', 'egress-qos']:
+                # a pair needs a number on both sides of the colon
+                for value in ['2:', ':2', ':', '1:2:3', '1 2', '1:2 3', '8:1', 'a:b']:
+                    with self.subTest(option=option, value=value):
+                        with self.assertRaises(ConfigSessionError):
+                            self.cli_set(base + [option, value])
+
+                # more than one space between the pairs is allowed
+                self.cli_set(base + [option, '0:1  1:6'])
+                self.cli_delete(base + [option])
+
         def test_vif_8021q_qos_change(self):
             # XXX: This testcase is not allowed to run as first testcase, reason
             # is the Wireless test will first load the wifi kernel hwsim module
